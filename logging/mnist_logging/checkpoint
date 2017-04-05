@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/babasarala/repos/babaflow/logging/mnist_logging/model.ckpt-4999"
+all_model_checkpoint_paths: "/Users/babasarala/repos/babaflow/logging/mnist_logging/model.ckpt-4999"
