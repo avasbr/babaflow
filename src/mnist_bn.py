@@ -42,7 +42,7 @@ def inference(inputs, is_training, keep_prob=0.8):
         endpoints['dropout'] = net
 
         logits = slim.fully_connected(
-            net, 10, activation_fn=None, scope='logits')
+            net, 10, activation_fn=None, normalizer_fn=None, normalizer_params=None, scope='logits')
         return logits, endpoints
 
 
