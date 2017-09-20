@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow.contrib.slim as slim
-
+import tensorflow as tf
 
 def inference(inputs, num_classes, is_training, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95):
     endpoints = {}
