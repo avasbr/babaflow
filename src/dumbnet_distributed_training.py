@@ -69,7 +69,7 @@ def main(args):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('--job_name', default='', help='"ps", "worker"')
-    parser.add_arguemnt('--task_index', type=int,
+    parser.add_argument('--task_index', type=int,
                         default=0, help='Index of task')
     parser.add_argument('--batch_size', type=int, default=50,
                         help='Size of the batch for minibatch training')
