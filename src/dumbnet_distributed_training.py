@@ -47,13 +47,16 @@ def main(args):
 
             init_op = tf.global_variables_initializer()
 
-            config = tf.ConfigProto(allow_soft_placement=True)
-            with tf.train.MonitoredTrainingSession(master=server.target,
-                                                   is_chief=(args.task_index == 0),
-                                                   save_checkpoint_secs=30,
-                                                   log_step_count_steps=10,
-                                                   config=config,
-                                                   checkpoint_dir=args.model_dirpath) as sess:
+            #config = tf.ConfigProto(allow_soft_placement=True)
+            #with tf.train.MonitoredTrainingSession(master=server.target,
+            #                                       is_chief=(args.task_index == 0),
+            #                                       save_checkpoint_secs=30,
+            #                                       log_step_count_steps=10,
+            #                                       config=config,
+            #                                       checkpoint_dir=args.model_dirpath) as sess:
+
+            sv = tf.train.Supervisor(is_chief=(args.task_index==0), logdir=args.model_dirpath, global_step=global_step, init_op=init_op)
+            with sv.managed_session(server.target) as sess:
                 step = 0
                 while not sess.should_stop() and step <= args.num_steps:
                     sess.run(init_op)
@@ -75,9 +78,9 @@ def parse_arguments(argv):
                         help='Size of the batch for minibatch training')
     parser.add_argument('--num_steps', type=int, default=5000,
                         help='Number of training steps')
-    parser.add_argument('--model_dirpath', default='/ml/mnist_models',
+    parser.add_argument('--model_dirpath', default='/home/bhargav/models',
                         help='Directory where models live')
-    parser.add_argument('--print_every', type=int, default=100)
+    parser.add_argument('--print_every', type=int, default=50)
 
     return parser.parse_args(argv)
 
