@@ -31,19 +31,20 @@ def main(args):
             # set up the data
             mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
             num_classes = 10
-            x_ = tf.placeholder(tf.float32, shape=[None, 784], name='input')
-            y_ = tf.placeholder(tf.float32, shape=[None, 10], name='output')
-            #is_training = tf.placeholder(tf.bool, name='phase_train')
+            input_placeholder = tf.placeholder(tf.float32, shape=[None, 784], name='input')
+            label_placeholder = tf.placeholder(tf.float32, shape=[None, 10], name='output')
+            phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
 
             logits, _ = Dumbnet.inference(
-                x_, num_classes, is_training=True, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
+                input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
+            
             loss_op = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_))
+                tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=label_placeholder))
 
             train_op = tf.train.AdamOptimizer(
                 1e-3).minimize(loss_op, global_step=global_step)
             
-            acc_op = tu.compute_accuracy(logits, y_)
+            acc_op = tu.compute_accuracy(logits, label_placeholder)
             init_op = tf.global_variables_initializer()
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
