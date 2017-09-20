@@ -25,39 +25,33 @@ def main(args):
     elif args.job_name == 'worker':
         with tf.device(tf.train.replica_device_setter(worker_device='/job:worker/task:%d' % args.task_index,
                                                       cluster=cluster)):
+            # Building the model...
+            global_step = tf.contrib.framework.get_or_create_global_step()
+
+            # set up the data
             mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
             num_classes = 10
-
-            global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0),
-                                          trainable=False)
-
             x_ = tf.placeholder(tf.float32, shape=[None, 784], name='input')
             y_ = tf.placeholder(tf.float32, shape=[None, 10], name='output')
-            is_training = tf.placeholder(tf.bool, name='phase_train')
+            #is_training = tf.placeholder(tf.bool, name='phase_train')
 
             logits, _ = Dumbnet.inference(
-                x_, num_classes, is_training, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
+                x_, num_classes, is_training=True, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
             loss_op = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_))
 
             train_op = tf.train.AdamOptimizer(
-                1e-4).minimize(loss_op, global_step=global_step)
+                1e-3).minimize(loss_op, global_step=global_step)
+            
             acc_op = tu.compute_accuracy(logits, y_)
-
             init_op = tf.global_variables_initializer()
 
-            #config = tf.ConfigProto(allow_soft_placement=True)
-            #with tf.train.MonitoredTrainingSession(master=server.target,
-            #                                       is_chief=(args.task_index == 0),
-            #                                       save_checkpoint_secs=30,
-            #                                       log_step_count_steps=10,
-            #                                       config=config,
-            #                                       checkpoint_dir=args.model_dirpath) as sess:
-
-            sv = tf.train.Supervisor(is_chief=(args.task_index==0), logdir=args.model_dirpath, global_step=global_step, init_op=init_op)
-            with sv.managed_session(server.target) as sess:
-                step = 0
-                while not sess.should_stop() and step <= args.num_steps:
+            hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
+            with tf.train.MonitoredTrainingSession(master=server.target, 
+                                                   is_chief=(args.task_index == 0),
+                                                   checkpoint_dir=args.model_dirpath,
+                                                   hooks=hooks) as sess:
+                while not sess.should_stop():
                     sess.run(init_op)
                     batch_x, batch_y = mnist.train.next_batch(args.batch_size)
                     _, acc, loss, step = sess.run([train_op, acc_op, loss_op, global_step],
