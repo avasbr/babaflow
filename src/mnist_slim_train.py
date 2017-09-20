@@ -11,14 +11,18 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from datetime import datetime
 from tensorflow.python.ops import control_flow_ops
+import pickle as pkl
 
 
 def inference(inputs, is_training, keep_prob=0.5):
     endpoints = {}
+    
     with slim.arg_scope([slim.conv2d, slim.fully_connected],
                         normalizer_fn=slim.batch_norm,
                         normalizer_params={'is_training': is_training, 
-                                           'decay': 0.95}):
+                                           'decay': 0.95,
+                                           'updates_collections': None,
+                                           'scale':True}):
 
         inputs_reshaped = tf.reshape(inputs, [-1, 28, 28, 1])
 
@@ -98,13 +102,11 @@ def main(args):
     #optimizer = tf.train.AdamOptimizer(
     #    learning_rate=0.1, beta1=0.9, beta2=0.999, epsilon=0.1)
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.1)
-    train_op = slim.learning.create_train_op(
-        xent, optimizer, global_step=global_step)
+    
+    #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    #with tf.control_dependencies(update_ops):
+    train_op = slim.learning.create_train_op(xent, optimizer, global_step=global_step)
 
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    if update_ops:
-        updates = tf.group(*update_ops)
-        xent = control_flow_ops.with_dependencies([updates], xent)
 
     # add summaries for BN variables
     tf.summary.scalar('accuracy', acc)
@@ -124,17 +126,19 @@ def main(args):
         '/Users/babasarala/Datasets/MNIST', one_hot=False)
 
     # create saver
-    saver = tf.train.Saver(tf.trainable_variables(), max_to_keep=300)
+    saver = tf.train.Saver(max_to_keep=50)
     model_name = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')
     
     with tf.Session() as sess:
         save_metagraph(sess, saver, args.model_dirpath, model_name)
         sess.run(global_init_op)
 
+        pre_training_batch_norm_vals = {v.name: sess.run(v) for v in tf.global_variables() if v.name.startswith('fc1/Batch')} 
+       
         # establish training and validation
         train_writer = tf.summary.FileWriter(args.event_log_dirpath, sess.graph)
 
-        for i in range(10000):
+        for i in range(200):
             batch_inputs, batch_labels = mnist.train.next_batch(128)
             feed_dict = {inputs_placeholder: batch_inputs,
                          labels_placeholder: batch_labels,
@@ -153,6 +157,11 @@ def main(args):
                 print('Saving checkpoint filepath...')
                 save_checkpoint_filepath(sess, saver, args.model_dirpath, model_name, global_step)
                 print('Finished!')
+
+        post_training_batch_norm_vals = {v.name: sess.run(v) for v in tf.global_variables() if v.name.startswith('fc1/Batch')}
+
+    pkl.dump((pre_training_batch_norm_vals, post_training_batch_norm_vals), open('/Users/babasarala/Datasets/MNIST/train_batch_norm_values.pkl', 'wb'))
+
               
 
 

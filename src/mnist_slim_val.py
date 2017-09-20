@@ -10,6 +10,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from datetime import datetime
+import pickle as pkl
 from tensorflow.python.ops import control_flow_ops
 
 
@@ -58,7 +59,12 @@ def main(args):
 
     with tf.Session() as sess:
         sess.run(global_init_op)
+        pre_loading_batch_norm_vals = {v.name: sess.run(v) for v in tf.global_variables() if v.name.startswith('fc1/Batch')} 
         saver.restore(sess, '%s/%s'%(args.model_dirpath, args.checkpoint_filename))
+        post_loading_batch_norm_vals = {v.name: sess.run(v) for v in tf.global_variables() if v.name.startswith('fc1/Batch')} 
+
+        pkl.dump((pre_loading_batch_norm_vals, post_loading_batch_norm_vals), open('/Users/babasarala/Datasets/MNIST/validation_batch_norm_vals.pkl', 'wb'))
+
 
         for i in range(50):
             batch_inputs, batch_labels = mnist.validation.next_batch(128)
