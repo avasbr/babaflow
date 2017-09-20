@@ -15,7 +15,7 @@ def inference(inputs, num_classes, is_training, keep_prob=0.5, weight_decay=5e-3
 
         inputs_reshaped = tf.reshape(inputs, [-1, 28, 28, 1])
 
-        net = slim.conv2d(inputs, 16, [5, 5], scope='conv1')
+        net = slim.conv2d(inputs_reshaped, 16, [5, 5], scope='conv1')
         endpoints['conv1'] = net
 
         net = slim.max_pool2d(net, [2, 2], scope='pool1')
