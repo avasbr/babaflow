@@ -47,6 +47,7 @@ def main(args):
             init_op = tf.global_variables_initializer()
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
+            print 'Starting the training...'
             with tf.train.MonitoredTrainingSession(master=server.target, 
                                                    is_chief=(args.task_index == 0),
                                                    checkpoint_dir=args.model_dirpath,
