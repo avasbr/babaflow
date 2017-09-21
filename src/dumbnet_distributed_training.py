@@ -66,8 +66,7 @@ def main(args):
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
             print 'Starting the training...'
             # , log_device_placement=False,
-            config = tf.ConfigProto(allow_soft_placement=True, device_filters=["/job:ps", "/job:worker/task:%d" %args.task_index])
-            step = 0
+            config = tf.ConfigProto(allow_soft_placement=True)
             with tf.train.MonitoredTrainingSession(master=server.target,
                                                    is_chief=(
                                                        args.task_index == 0),
