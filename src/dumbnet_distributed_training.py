@@ -6,12 +6,6 @@ import argparse
 import sys
 
 
-def compute_accuracy(logits, labels):
-    labels = tf.cast(labels, tf.int32)
-    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
-    acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-    return acc
-
 def create_metrics_ops(logits, labels, num_classes=10):
 
     with tf.name_scope('xent'):
@@ -23,6 +17,13 @@ def create_metrics_ops(logits, labels, num_classes=10):
         acc = compute_accuracy(logits, labels)
 
     return xent_mean, acc
+
+
+def compute_accuracy(logits, labels):
+    labels = tf.cast(labels, tf.int32)
+    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
+    acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    return acc
 
 
 def main(args):
@@ -52,7 +53,7 @@ def main(args):
             input_placeholder = tf.placeholder(
                 tf.float32, shape=[None, 784], name='input')
             labels_placeholder = tf.placeholder(
-                tf.float32, shape=[None], name='output')
+                tf.int32, shape=[None], name='output')
             phase_train_placeholder = tf.placeholder_with_default(
                 tf.constant(True), shape=(), name='phase_train')
 
