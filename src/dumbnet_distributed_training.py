@@ -12,6 +12,7 @@ def compute_accuracy(logits, labels):
     acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     return acc
 
+
 def main(args):
 
     # define the parameter and worker servers and the cluster
@@ -36,9 +37,12 @@ def main(args):
             # set up the data
             mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
             num_classes = 10
-            input_placeholder = tf.placeholder(tf.float32, shape=[None, 784], name='input')
-            label_placeholder = tf.placeholder(tf.float32, shape=[None, 10], name='output')
-            phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
+            input_placeholder = tf.placeholder(
+                tf.float32, shape=[None, 784], name='input')
+            label_placeholder = tf.placeholder(
+                tf.float32, shape=[None, 10], name='output')
+            phase_train_placeholder = tf.placeholder(
+                tf.bool, name='phase_train')
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
@@ -48,21 +52,24 @@ def main(args):
 
             train_op = tf.train.AdamOptimizer(
                 1e-3).minimize(loss_op, global_step=global_step)
-            
+
             acc_op = compute_accuracy(logits, label_placeholder)
             init_op = tf.global_variables_initializer()
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
             print 'Starting the training...'
-            with tf.train.MonitoredTrainingSession(master=server.target, 
+            config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False,
+                                    device_filters=["/job:ps", "/job:worker/task:%d" % args.task_index])
+            with tf.train.MonitoredTrainingSession(master=server.target,
                                                    is_chief=(args.task_index == 0),
                                                    checkpoint_dir=args.model_dirpath,
+                                                   config=config,
                                                    hooks=hooks) as sess:
                 while not sess.should_stop():
                     sess.run(init_op)
                     batch_x, batch_y = mnist.train.next_batch(args.batch_size)
                     _, acc, loss, step = sess.run([train_op, acc_op, loss_op, global_step],
-                                                  feed_dict={x_: batch_x, y_: batch_y})
+                                                  feed_dict={input_placeholder: batch_x, label_placeholder: batch_y})
                     if step % args.print_every == 0:
                         print 'Worker : {}, Step: {}, Loss: {}, Accuracy: {}'.format(args.task_index, step, loss, acc)
 
