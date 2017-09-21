@@ -42,7 +42,7 @@ def main(args):
             label_placeholder = tf.placeholder(
                 tf.float32, shape=[None, 10], name='output')
             phase_train_placeholder = tf.placeholder_with_default(
-                tf.bool, name='phase_train')
+                tf.constant(True), shape=(), name='phase_train')
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
@@ -61,7 +61,8 @@ def main(args):
             config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False,
                                     device_filters=["/job:ps", "/job:worker/task:%d" % args.task_index])
             with tf.train.MonitoredTrainingSession(master=server.target,
-                                                   is_chief=(args.task_index == 0),
+                                                   is_chief=(
+                                                       args.task_index == 0),
                                                    checkpoint_dir=args.model_dirpath,
                                                    config=config,
                                                    hooks=hooks) as sess:
