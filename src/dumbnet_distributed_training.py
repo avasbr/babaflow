@@ -61,8 +61,7 @@ def main(args):
             opt = tf.train.AdamOptimizer(
                 1e-2, beta1=0.9, beta2=0.999, epsilon=0.1)
             loss_op, acc_op = create_metrics_ops(logits, labels_placeholder)
-            train_op = slim.learning.create_train_op(loss_op, opt, global_step=global_step)
-            init_op = tf.global_variables_initializer()
+            train_op = opt.minimize(loss_op, global_step=global_step)
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
             print 'Starting the training...'
