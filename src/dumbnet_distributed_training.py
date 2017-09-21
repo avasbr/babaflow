@@ -1,11 +1,16 @@
 import tensorflow as tf
 from tensorflow.contrib import slim
-from everface.utils import train_utils as tu
 import Dumbnet
 from tensorflow.examples.tutorials.mnist import input_data
 import argparse
 import sys
 
+
+def compute_accuracy(logits, labels):
+    labels = tf.cast(labels, tf.int32)
+    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
+    acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    return acc
 
 def main(args):
 
@@ -37,14 +42,14 @@ def main(args):
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
-            
+
             loss_op = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=label_placeholder))
 
             train_op = tf.train.AdamOptimizer(
                 1e-3).minimize(loss_op, global_step=global_step)
             
-            acc_op = tu.compute_accuracy(logits, label_placeholder)
+            acc_op = compute_accuracy(logits, label_placeholder)
             init_op = tf.global_variables_initializer()
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
