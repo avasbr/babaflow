@@ -187,7 +187,7 @@ elif FLAGS.job_name == "worker":
                     # perform the operations we defined earlier on batch
                     _, cost, step = sess.run(
                         [train_op, loss_op, global_step],
-                        feed_dict={x: batch_x, y_: batch_y})
+                        feed_dict={x: batch_x, y_: batch_y, phase_train_placeholder: True})
                     #writer.add_summary(summary, step)
 
                     count += 1
@@ -202,7 +202,7 @@ elif FLAGS.job_name == "worker":
                         count = 0
 
             print("Test-Accuracy: %2.2f" % sess.run(acc_op,
-                                                    feed_dict={x: mnist.test.images, y_: mnist.test.labels, phase_train_placeholder: True}))
+                                                    feed_dict={x: mnist.test.images, y_: mnist.test.labels, phase_train_placeholder: False}))
             print("Total Time: %3.2fs" % float(time.time() - begin_time))
             print("Final Cost: %.4f" % cost)
 
