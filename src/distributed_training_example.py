@@ -64,6 +64,7 @@ elif FLAGS.job_name == "worker":
         x = tf.placeholder(tf.float32, shape=[None, 784], name="x-input")
         #    # target 10 output classes
         y_ = tf.placeholder(tf.int32, shape=[None], name="y-input")
+        phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
 
         logits, _ = Dumbnet.inference(
                 x, 10, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
@@ -183,7 +184,7 @@ elif FLAGS.job_name == "worker":
                         count = 0
 
             print("Test-Accuracy: %2.2f" % sess.run(acc_op,
-                                                    feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+                                                    feed_dict={x: mnist.test.images, y_: mnist.test.labels, phase_train_placeholder: True}))
             print("Total Time: %3.2fs" % float(time.time() - begin_time))
             print("Final Cost: %.4f" % cost)
 
