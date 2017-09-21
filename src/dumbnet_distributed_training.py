@@ -8,10 +8,21 @@ import sys
 
 def compute_accuracy(logits, labels):
     labels = tf.cast(labels, tf.int32)
-    correct_pred = tf.equal(
-        tf.cast(tf.argmax(logits, 1), tf.argmax(labels, 1)), labels)
+    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
     acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     return acc
+
+def create_metrics_ops(logits, labels, num_classes=10):
+
+    with tf.name_scope('xent'):
+        xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=labels, logits=logits)
+        xent_mean = tf.reduce_mean(xent)
+
+    with tf.name_scope('accuracy'):
+        acc = compute_accuracy(logits, labels)
+
+    return xent_mean, acc
 
 
 def main(args):
@@ -36,25 +47,19 @@ def main(args):
             global_step = tf.contrib.framework.get_or_create_global_step()
 
             # set up the data
-            mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+            mnist = input_data.read_data_sets('MNIST_data', one_hot=False)
             num_classes = 10
             input_placeholder = tf.placeholder(
                 tf.float32, shape=[None, 784], name='input')
-            label_placeholder = tf.placeholder(
-                tf.float32, shape=[None, 10], name='output')
+            labels_placeholder = tf.placeholder(
+                tf.float32, shape=[None], name='output')
             phase_train_placeholder = tf.placeholder_with_default(
                 tf.constant(True), shape=(), name='phase_train')
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
-
-            loss_op = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=label_placeholder))
-
-            train_op = tf.train.AdamOptimizer(
-                1e-3).minimize(loss_op, global_step=global_step)
-
-            acc_op = compute_accuracy(logits, label_placeholder)
+            loss_op, acc_op = create_metrics_ops(logits, labels_placeholder)
+            train_op = tf.train.AdamOptimizer(1e-3).minimize(loss_op, global_step=global_step)
             init_op = tf.global_variables_initializer()
 
             hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
@@ -71,7 +76,7 @@ def main(args):
                     sess.run(init_op)
                     batch_x, batch_y = mnist.train.next_batch(args.batch_size)
                     _, acc, loss, step = sess.run([train_op, acc_op, loss_op, global_step],
-                                                  feed_dict={input_placeholder: batch_x, label_placeholder: batch_y})
+                                                  feed_dict={input_placeholder: batch_x, labels_placeholder: batch_y})
                     if step % args.print_every == 0:
                         print 'Worker : {}, Step: {}, Loss: {}, Accuracy: {}'.format(args.task_index, step, loss, acc)
 
