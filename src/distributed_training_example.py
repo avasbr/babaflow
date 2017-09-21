@@ -20,6 +20,24 @@ import Dumbnet
 import sys
 import time
 
+def create_metrics_ops(logits, labels, num_classes=10):
+
+    with tf.name_scope('xent'):
+        xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=labels, logits=logits)
+        xent_mean = tf.reduce_mean(xent)
+
+    with tf.name_scope('accuracy'):
+        acc = compute_accuracy(logits, labels)
+
+    return xent_mean, acc
+
+def compute_accuracy(logits, labels):
+    labels = tf.cast(labels, tf.int32)
+    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
+    acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    return acc
+
 # cluster specification
 parameter_servers = ['localhost:3222']
 workers = ['localhost:3223',
