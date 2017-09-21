@@ -18,8 +18,7 @@ def main(args):
     # define the parameter and worker servers and the cluster
     parameter_servers = ['localhost:2222']
     workers = ['localhost:2223',
-               'localhost:2224',
-               'localhost:2225']
+               'localhost:2224']
     cluster = tf.train.ClusterSpec({'ps': parameter_servers,
                                     'worker': workers})
     server = tf.train.Server(cluster,
