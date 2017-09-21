@@ -59,21 +59,28 @@ def main(args):
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
-            opt = tf.train.AdamOptimizer(1e-2, beta1=0.9, beta2=0.999, epsilon=0.1)
+            opt = tf.train.AdamOptimizer(
+                1e-2, beta1=0.9, beta2=0.999, epsilon=0.1)
             loss_op, acc_op = create_metrics_ops(logits, labels_placeholder)
-            train_op = slim.learning.create_train_op(loss_op, opt, global_step=global_step)
+            train_op = slim.learning.create_train_op(
+                loss_op, opt, global_step=global_step)
             init_op = tf.global_variables_initializer()
 
-            #hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
+            hooks = [tf.train.StopAtStepHook(last_step=args.num_steps)]
             print 'Starting the training...'
-            config = tf.ConfigProto(allow_soft_placement=True) #, log_device_placement=False,
-            # device_filters=["/job:ps", "/job:worker/task:%d" % args.task_index])
+            # , log_device_placement=False,
+            config = tf.ConfigProto(allow_soft_placement=True)
+            # device_filters=["/job:ps", "/job:worker/task:%d" %
+            # args.task_index])
             step = 0
             with tf.train.MonitoredTrainingSession(master=server.target,
                                                    is_chief=(
                                                        args.task_index == 0),
                                                    checkpoint_dir=args.model_dirpath,
-                                                   config=config) as sess:
+                                                   save_checkpoint_secs=30,
+                                                   log_step_count_steps=10,
+                                                   config=config,
+                                                   hooks=hooks) as sess:
                 while not sess.should_stop():
                     sess.run(init_op)
                     batch_x, batch_y = mnist.train.next_batch(args.batch_size)
@@ -81,8 +88,6 @@ def main(args):
                                                   feed_dict={input_placeholder: batch_x, labels_placeholder: batch_y})
                     if step % args.print_every == 0:
                         print 'Worker : {}, Step: {}, Loss: {}, Accuracy: {}'.format(args.task_index, step, loss, acc)
-
-                # Add test set accuracy
 
 
 def parse_arguments(argv):
