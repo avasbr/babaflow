@@ -54,7 +54,7 @@ def main(args):
                 tf.float32, shape=[None, 784], name='input')
             labels_placeholder = tf.placeholder(
                 tf.int32, shape=[None], name='output')
-            phase_train_placeholder = tf.placeholder_with_default(tf.bool, name='phase_train')
+            phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
 
             logits, _ = Dumbnet.inference(
                 input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
