@@ -61,8 +61,12 @@ elif FLAGS.job_name == "worker":
             initializer=tf.constant_initializer(0),
             trainable=False)
 
+        x = tf.placeholder(tf.float32, shape=[None, 784], name="x-input")
+        #    # target 10 output classes
+        y_ = tf.placeholder(tf.int32, shape=[None], name="y-input")
+
         logits, _ = Dumbnet.inference(
-                input_placeholder, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
+                x, num_classes, is_training=phase_train_placeholder, keep_prob=0.5, weight_decay=5e-3, decay_term=0.95)
         opt = tf.train.AdamOptimizer(1e-2, beta1=0.9, beta2=0.999, epsilon=0.1)
         loss_op, acc_op = create_metrics_ops(logits, labels_placeholder)
         train_op = opt.minimize(loss_op, global_step=global_step)
@@ -148,7 +152,7 @@ elif FLAGS.job_name == "worker":
                 sess.run(init_token_op)
             '''
             # create log writer object (this will log on every machine)
-            writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+            #writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
 
             # perform training cycles
             start_time = time.time()
