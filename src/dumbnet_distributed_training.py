@@ -8,7 +8,8 @@ import sys
 
 def compute_accuracy(logits, labels):
     labels = tf.cast(labels, tf.int32)
-    correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), labels)
+    correct_pred = tf.equal(
+        tf.cast(tf.argmax(logits, 1), tf.argmax(labels, 1)), labels)
     acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     return acc
 
